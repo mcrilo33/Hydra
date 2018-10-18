@@ -11,13 +11,20 @@ import requests_html
 import hashlib
 import os
 import datetime
+import time
+import bencode
+import itertools
+
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
-from utilities import artistParser, dateStrToDatetime, MUSIC_PATH, \
+from tinydb import TinyDB, Query
+from .utilities import artistParser, dateStrToDatetime, MUSIC_PATH, \
     TORRENTS_PATH, MUSIC_DATABASE_PATH, ARTIST_DATABASE_PATH, \
     TORRENTS_DATABASE_PATH
-from musicBrainz import checkMusicBrainzReleaseGroup
-from tinydb import TinyDB, Query
+from .musicBrainz import checkMusicBrainzReleaseGroup
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 TOP_LEVEL_URL = 'https://rutracker.org'
 USERNAME = 'dieu783'
@@ -32,20 +39,22 @@ HEADERS = {
 
 def getTorrentContent(content):
 
-    assert type(content) is str, "content is not a string object: %r" % content
-
     torrent = bencode.bdecode(content)
+
+    if "files" not in torrent["info"]:
+        if os.path.splitext(torrent["info"]["name"])[1]:
+            return torrent['info']['name'], [], False
+        print('{} rejected !'.format(torrent["info"]["name"]))
+        return '', [], True
+
     tree = itertools.chain((f["path"] for f in torrent["info"]["files"]))
     dirs = {t[0]:True for t in tree if len(t)>1}
 
-    return torrent['info']['name'], dirs
 
-def checkTorrentIsFromTheArtist(artist_id, content):
+    return torrent['info']['name'], dirs, False
 
-    assert type(artist__id) is str, "artist_id is not a string: %r" % artist_id
-    assert type(content) is str, "content is not a string object: %r" % content
+def checkTorrentIsFromTheArtist(artist_id, torrent_name, torrent_dirs):
 
-    torrent_name, torrent_dirs = getTorrentContent(content)
     for dir in torrent_dirs:
         if checkMusicBrainzReleaseGroup(artist_id, dir):
             return True
@@ -54,15 +63,33 @@ def checkTorrentIsFromTheArtist(artist_id, content):
     
     return False
 
-def checkTorrent(artist_id, content):
+def checkTorrent(artist_id, hash, content, torrent_db, verbose=True):
 
-    if not checkTorrentIsFromTheArtist(artist_id, content):
+    torrent_name, torrent_dirs, exception = getTorrentContent(content)
+
+    if exception:
         return False
-    if 
-    
-def getRuTrackerTorrents(artist_id, date):
 
-    assert type(artist__id) is str, "artist_id is not a string: %r" % artist_id
+    if not checkTorrentIsFromTheArtist(artist_id, torrent_name, torrent_dirs):
+        return False
+    # Check if it has been already downloaded
+    torrent = Query()
+    results = torrent_db.search(
+        torrent.hash == hash
+    )
+    if len(results)>0:
+        return False
+
+    if verbose:
+        print(
+            'New torrent : {} is added to the database.'.format(torrent_name)
+        )
+
+    return True
+    
+def getRuTrackerTorrents(artist_id, date, verbose=True):
+
+    assert type(artist_id) is str, "artist_id is not a string: %r" % artist_id
     assert type(date) is str, "date is not a string object: %r" % date
 
     global TOP_LEVEL_URL
@@ -72,7 +99,9 @@ def getRuTrackerTorrents(artist_id, date):
     music_db = TinyDB(MUSIC_DATABASE_PATH)
     artist_db = TinyDB(ARTIST_DATABASE_PATH)
     artist = Query()
-    artist_name = db.search(artist.artist-mbid == artist_id).artist-name
+    artist_name = artist_db.search(
+        artist.artist_mbid == artist_id
+    )[0]['artist_name']
     artist_name, artist = artistParser(artist_name)
     if date != '':
        date = dateStrToDatetime(date)
@@ -93,6 +122,8 @@ def getRuTrackerTorrents(artist_id, date):
         verify=False,
         headers=HEADERS
     )
+    if verbose:
+        print('Connected at RuTracker.org...\n')
 
     url = "https://rutracker.org/forum/tracker.php?nm=%s" % (artist)
     response = req.get(url, data=post_data, timeout=60, stream=True, verify=False, headers=HEADERS)
@@ -102,6 +133,10 @@ def getRuTrackerTorrents(artist_id, date):
     link_count = 0
     next = True
     torrent_db = TinyDB(TORRENTS_DATABASE_PATH)
+    if verbose:
+        print('Starting to download torrents ' \
+            + 'related to {}...\n'.format(artist_name.upper()))
+        start_time = time.time()
     while(next):
         for link in links:
             date_tmp = link.find('p').text
@@ -115,15 +150,16 @@ def getRuTrackerTorrents(artist_id, date):
             hash = hashlib.md5(response.content).hexdigest()
             tmp_path = os.path.join(TORRENTS_PATH, hash + '.torrent')
 
-            # Check if it has been already downloaded
-            torrent = Query()
-            results = torrent_db.search(
-                torrent.hash == hash
-            )
-            if len(results)==0 and checkTorrent(artist_id, content):
+            if checkTorrent(artist_id,
+                            hash,
+                            response.content,
+                            torrent_db,
+                            verbose=verbose):
                 open(tmp_path, 'wb').write(response.content)
                 torrent_db.insert({'hash': hash})
                 link_count += 1
+                if verbose:
+                    print('Total downloaded : {}'.format(link_count))
 
             if (link_count>500
                 or (link_count>200 and datetime.datetime(2010, 1, 1) > date_tmp)
@@ -145,5 +181,10 @@ def getRuTrackerTorrents(artist_id, date):
             links = soup.find_all('tr', class_='hl-tr')
         else:
             next = False
+        if link_count==51:
+            import ipdb; ipdb.set_trace() 
 
+    if verbose:
+        print('Downloading done. Took {}'.format(start_time - time.time()))
     return 0
+

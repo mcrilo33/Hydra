@@ -14,7 +14,7 @@ MUSIC_PATH = '/home/mcrilo33/Repos/MusicTest' # TO MOVE LATER
 TORRENTS_PATH = os.path.join(MUSIC_PATH, '.torrents')
 MUSIC_DATABASE_PATH = os.path.join(MUSIC_PATH, '.music.json')
 ARTIST_DATABASE_PATH = os.path.join(MUSIC_PATH, '.artists.json')
-TORRENT_DATABASE_PATH = os.path.join(MUSIC_PATH, '.torrents.json')
+TORRENTS_DATABASE_PATH = os.path.join(MUSIC_PATH, '.torrents.json')
 TOP_QUALITY = ['flac', 'cd']
 
 if not os.path.isfile(TORRENTS_PATH):
