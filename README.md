@@ -13,7 +13,10 @@ Get data from dbpedia.
 
 ### Dependencies
 
-None.
+Hydra uses transmission-cli to download all torrents. You need to install it.
+For ubuntu the command is : >>sudo apt-get install transmission-cli
+For arch with pacman manager the command is : >>sudo pacman -S transmission-cli
+Etc...
 
 ### User Installation
 
