@@ -19,7 +19,7 @@ TORRENTS_DATABASE_PATH = os.path.join(MUSIC_PATH, '.torrents.json')
 REJECTED_PATH = os.path.join(MUSIC_PATH, '.rejected.csv')
 TOP_QUALITY = ['flac', 'cd']
 
-if not os.path.isfile(TORRENTS_PATH):
+if not os.path.isdir(TORRENTS_PATH):
     os.system('mkdir %s' % TORRENTS_PATH)
 
 def artistParser(artist_typed):

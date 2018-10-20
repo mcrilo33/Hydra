@@ -10,3 +10,4 @@ from .database import *
 from .musicBrainz import *
 from .rutracker import *
 from .utilities import *
+from .test import *
