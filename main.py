@@ -6,7 +6,7 @@
 # Last Modified Date: 08.10.2018
 # Last Modified By  : Mathieu Crilout <mathieucrilout@mail>
 
-from scraping.database import addNewArtist
+from scraping.database import addNewArtist, downloadRejected
 from optparse import OptionParser
 
 if __name__ == '__main__':
@@ -26,12 +26,21 @@ if __name__ == '__main__':
         default=True,
         help="Verbosity"
     )
+    parser.add_option(
+        "-r", "--rejected",
+        dest="rejected",
+        default=False,
+        action="store_true",
+        help="Routine to download or not rejected torrents."
+    )
     (options, args) = parser.parse_args()
     print(options, args)
 
 artist_typed = options.artist_typed
+rejected = options.rejected
 verbose = options.verbose
 
 if artist_typed != '':
     addNewArtist(artist_typed, verbose=verbose)
-
+elif rejected:
+    downloadRejected(verbose=verbose)

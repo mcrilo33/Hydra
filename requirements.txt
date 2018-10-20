@@ -5,7 +5,10 @@ datetime
 hashlib
 itertools
 json
+numpy
 os
+pandas
+PTN
 requests
 requests_html
 tinydb

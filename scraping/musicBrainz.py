@@ -10,11 +10,19 @@ import urllib.request
 import json
 import re
 import os
+import numpy as np
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from tinydb import TinyDB, Query
+from similarity.cosine import Cosine
+from similarity.ngram import NGram
+from similarity.qgram import QGram
+from similarity.jaccard import Jaccard
+from similarity.jarowinkler import JaroWinkler
+from similarity.sorensen_dice import SorensenDice
 from .utilities import artistParser, dateStrToDatetime, \
-    MUSIC_DATABASE_PATH, TOP_QUALITY
+    levenshteinDistance, MUSIC_DATABASE_PATH, TOP_QUALITY, \
+    album_parsing
 
 def urlEncodeNonAscii(b):
     return re.sub('[\x80-\xFF]', lambda c: '%%%02x' % ord(c.group(0)), b)
@@ -54,7 +62,7 @@ def getMusicBrainzAlbums(artist_id, date):
     url = """
         https://musicbrainz.org/ws/2/release-group?artist=%s&fmt=json&limit=100
     """ % (artist_id)
-    response = (urllib.request.urlopen(url)).read()
+    response = (urllib.request.urlopen(url, timeout=10)).read()
     data = json.loads(response)
     total = data['release-group-count']
     releases = data['release-groups']
@@ -64,8 +72,8 @@ def getMusicBrainzAlbums(artist_id, date):
         if local_count==len(releases):
             url = """
                 https://musicbrainz.org/ws/2/release-group?artist=%s&fmt=json&limit=100&offset=%s
-            """ % (id, count)
-            response = (urllib.request.urlopen(url)).read()
+            """ % (artist_id, count)
+            response = (urllib.request.urlopen(url, timeout=10)).read()
             data = json.loads(response)
             releases = data['release-groups']
             local_count = 0
@@ -76,10 +84,12 @@ def getMusicBrainzAlbums(artist_id, date):
     results = []
     for album in albums:
         album_date = album['first-release-date']
-        if album_date!='':
-            album_date_tmp =  dateStrToDatetime(album_date)
-        if album_date=='' or (date != '' and date <= album_date_tmp):
+        if date == '':
             results.append((artist_id, album_date, album['title'], album['id']))
+        elif date != '' and album_date != '':
+            album_date_tmp =  dateStrToDatetime(album_date)
+            if date <= album_date_tmp:
+                results.append((artist_id, album_date, album['title'], album['id']))
 
     return results
 
@@ -88,7 +98,16 @@ def checkMusicBrainzReleaseGroup(artist_id, title_typed):
     assert type(artist_id) is str, "artist_id is not a string: %r" % artist_id
     assert type(title_typed) is str, "title is not a string: %r" % title_typed
 
+    if (title_typed.lower().endswith('.mkv')
+        or title_typed.lower().endswith('.avi')
+        or title_typed.lower().endswith('.mp4')
+        or title_typed.lower().endswith('.wmv')):
+        return False, "It's not a music file."
+
+    title_typed = album_parsing(title_typed)
     title_typed , title = artistParser(title_typed)
+    if title_typed.startswith('va'):
+        return False, "It's a Various Artist."
 
     # get MusicBrainz release-group infos
     url = \
@@ -104,6 +123,8 @@ def checkMusicBrainzReleaseGroup(artist_id, title_typed):
 
     # Check if there is corresponding release-group
     if len(data[0])>0:
+        print(data[0][0][0].text)
+        print(title_typed)
         # Then check if we already have a good copy
         music_db = TinyDB(MUSIC_DATABASE_PATH)
         release = Query()
@@ -113,7 +134,9 @@ def checkMusicBrainzReleaseGroup(artist_id, title_typed):
         if(len(results) == 0
            or not ('quality' in results[0] and results[0]['quality'] in
                 TOP_QUALITY)):
-            return True
-
-    return False
+            return True, ''
+        else:
+            return False, "We already have a good copy."
+    else:
+        return False, "There is no corresponding release-group."
 

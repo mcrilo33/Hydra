@@ -14,13 +14,14 @@ import datetime
 import time
 import bencode
 import itertools
+import pandas as pd
 
 from requests.auth import HTTPBasicAuth
 from bs4 import BeautifulSoup
 from tinydb import TinyDB, Query
 from .utilities import artistParser, dateStrToDatetime, MUSIC_PATH, \
     TORRENTS_PATH, MUSIC_DATABASE_PATH, ARTIST_DATABASE_PATH, \
-    TORRENTS_DATABASE_PATH
+    TORRENTS_DATABASE_PATH, REJECTED_PATH
 from .musicBrainz import checkMusicBrainzReleaseGroup
 
 import urllib3
@@ -55,37 +56,73 @@ def getTorrentContent(content):
 
 def checkTorrentIsFromTheArtist(artist_id, torrent_name, torrent_dirs):
 
+    reasons = {}
     for dir in torrent_dirs:
-        if checkMusicBrainzReleaseGroup(artist_id, dir):
-            return True
-    if checkMusicBrainzReleaseGroup(artist_id, torrent_name):
-        return True
-    
-    return False
+        test, reason = checkMusicBrainzReleaseGroup(artist_id, dir)
+        if test:
+            return True, ''
+    test, reason = checkMusicBrainzReleaseGroup(artist_id, torrent_name)
+    if test:
+        return True, ''
+    else:
+        return False, reason
 
-def checkTorrent(artist_id, hash, content, torrent_db, verbose=True):
+def saveRejected(torrent_name, reason, hash):
+
+    if os.path.isfile(REJECTED_PATH):
+        rejected_df = pd.read_csv(REJECTED_PATH)
+    else:
+        rejected_df = pd.DataFrame(
+            [],
+            columns=['torrent_name', 'reason', 'hash']
+        )
+
+    tmp = pd.DataFrame(
+            [[torrent_name, reason, hash]],
+            columns=['torrent_name', 'reason', 'hash']
+        )
+    rejected_df = rejected_df.append(tmp)
+    rejected_df.to_csv(REJECTED_PATH, index=False)
+
+def checkTorrent(artist_id, hash, content, torrent_db, tmp_path, verbose=True):
 
     torrent_name, torrent_dirs, exception = getTorrentContent(content)
 
+    test, reason = True, ''
     if exception:
-        return False
+        test, reason = False, 'Bad name format.'
 
-    if not checkTorrentIsFromTheArtist(artist_id, torrent_name, torrent_dirs):
-        return False
-    # Check if it has been already downloaded
-    torrent = Query()
-    results = torrent_db.search(
-        torrent.hash == hash
-    )
-    if len(results)>0:
-        return False
-
-    if verbose:
-        print(
-            'New torrent : {} is added to the database.'.format(torrent_name)
+    if test:
+        test, reason = checkTorrentIsFromTheArtist(artist_id, torrent_name, torrent_dirs)
+    if test:
+        # Check if it has already been downloaded
+        torrent = Query()
+        results = torrent_db.search(
+            torrent.hash == hash
         )
+        if len(results)>0:
+            test, reason = False, 'It has already been downloaded.'
 
-    return True
+    if test:
+        if verbose:
+            print(
+                'New torrent : {} is added to the database.'.format(torrent_name)
+            )
+    else:
+        if verbose:
+            print(
+                'New torrent : {} is rejected.\nReason : {}.'.format(
+                    torrent_name,
+                    reason
+                )
+            )
+        if reason != "It's not a music file.":
+            saveRejected(torrent_name, reason, hash)
+
+    open(tmp_path, 'wb').write(content)
+    torrent_db.insert({'hash': hash})
+
+    return test, reason
     
 def getRuTrackerTorrents(artist_id, date, verbose=True):
 
@@ -114,19 +151,38 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
         'login_password': PASSWORD,
         'login': 'вход',
     }
-    response = req.post(
-        login_url,
-        data=post_data,
-        timeout=60,
-        stream=True,
-        verify=False,
-        headers=HEADERS
-    )
+    connected = False
+    while not connected:
+        try:
+            response = req.post(
+                login_url,
+                data=post_data,
+                timeout=10,
+                stream=True,
+                verify=False,
+                headers=HEADERS
+            )
+            connected = True
+        except:
+            connected = False
     if verbose:
         print('Connected at RuTracker.org...\n')
 
     url = "https://rutracker.org/forum/tracker.php?nm=%s" % (artist)
-    response = req.get(url, data=post_data, timeout=60, stream=True, verify=False, headers=HEADERS)
+    connected = False
+    while not connected:
+        try:
+            response = req.get(
+                url,
+                data=post_data,
+                timeout=10,
+                stream=True,
+                verify=False,
+                headers=HEADERS
+            )
+            connected = True
+        except:
+            connected = False
     soup = BeautifulSoup(response.text, 'html.parser')
     links = soup.find_all('tr', class_='hl-tr')
 
@@ -150,14 +206,19 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
             hash = hashlib.md5(response.content).hexdigest()
             tmp_path = os.path.join(TORRENTS_PATH, hash + '.torrent')
 
-            if checkTorrent(artist_id,
+            test, reason = checkTorrent(artist_id,
                             hash,
                             response.content,
                             torrent_db,
-                            verbose=verbose):
-                open(tmp_path, 'wb').write(response.content)
-                torrent_db.insert({'hash': hash})
+                            tmp_path,
+                            verbose=verbose)
+            if test:
+                os.system('transmission-daemon')
+                os.system('transmission-remote -a {}'.format(tmp_path))
                 link_count += 1
+                if verbose:
+                    print('Total downloaded : {}'.format(link_count))
+            else:
                 if verbose:
                     print('Total downloaded : {}'.format(link_count))
 
@@ -181,10 +242,17 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
             links = soup.find_all('tr', class_='hl-tr')
         else:
             next = False
-        if link_count==51:
-            import ipdb; ipdb.set_trace() 
 
     if verbose:
-        print('Downloading done. Took {}'.format(start_time - time.time()))
+        print('Downloading done. Took {:10.2f}s'.format(time.time() - start_time))
+
+        rejected_df = pd.read_csv(REJECTED_PATH)
+        for i, row in rejected_df.iterrows():
+            print(
+                'New torrent : {} is rejected.\nReason : {}.'.format(
+                    row.torrent_name,
+                    row.reason
+                )
+            )
     return 0
 
