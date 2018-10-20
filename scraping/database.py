@@ -25,6 +25,7 @@ def addNewArtist(artist_typed, verbose=True):
     artist_id = getMusicBrainzArtistId(artist_typed)
     albums = getMusicBrainzAlbums(artist_id, '')
 
+    # debug purpose
     music_db.purge()
     artist_db.purge()
     torrent_db.purge()
@@ -71,12 +72,14 @@ def downloadRejected(verbose=True):
                     row.reason
                 )
             )
-            answer = input('Do you want to download it yet ? (yes|no)\n')
-            if answer in ['yes', 'no']:
+            answer = input('Do you want to download it yet ? (default:y|n)\n')
+            if answer == '':
+                answer = 'y'
+            if answer in ['y', 'n']:
                 ask = False
-        if answer == 'yes':
-            os.system('transmission-daemon')
-            os.system('transmission-remote -a {}'.format(tmp_path))
+        if answer == 'y':
+            os.system('transmission-daemon >&-')
+            os.system('transmission-remote -a {} >&-'.format(tmp_path))
         else:
             if verbose:
                 print('-> {} is deleted.\n'.format(row.torrent_name))

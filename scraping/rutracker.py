@@ -247,12 +247,11 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
         print('Downloading done. Took {:10.2f}s'.format(time.time() - start_time))
 
         rejected_df = pd.read_csv(REJECTED_PATH)
-        for i, row in rejected_df.iterrows():
+        if len(rejected_df):
             print(
-                'New torrent : {} is rejected.\nReason : {}.'.format(
-                    row.torrent_name,
-                    row.reason
-                )
+                '\nWe have actually {}'.format(len(rejected_df))\
+                + ' rejected torrents in the rejected list.'
             )
+            print('To check them use the command : python main.py --rejected')
     return 0
 

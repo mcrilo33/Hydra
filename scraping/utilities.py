@@ -11,7 +11,8 @@ import re
 from time import strptime, mktime
 from datetime import datetime
 
-MUSIC_PATH = '/home/mcrilo33/Repos/MusicTest' # TO MOVE LATER
+with open('.opt.txt', 'r') as f:
+    MUSIC_PATH = f.read()
 TORRENTS_PATH = os.path.join(MUSIC_PATH, '.torrents')
 MUSIC_DATABASE_PATH = os.path.join(MUSIC_PATH, '.music.json')
 ARTIST_DATABASE_PATH = os.path.join(MUSIC_PATH, '.artists.json')
