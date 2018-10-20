@@ -8,10 +8,13 @@
 
 import datetime
 from tinydb import TinyDB, Query
+import pandas as pd
+import os
 from .musicBrainz import getMusicBrainzAlbums, getMusicBrainzArtistId
 from .rutracker import getRuTrackerTorrents
 from .utilities import MUSIC_DATABASE_PATH, ARTIST_DATABASE_PATH, \
-    artistParser, TORRENTS_DATABASE_PATH
+    artistParser, TORRENTS_DATABASE_PATH, REJECTED_PATH, \
+    TORRENTS_PATH
 
 def addNewArtist(artist_typed, verbose=True):
 
@@ -54,4 +57,33 @@ def addNewArtist(artist_typed, verbose=True):
 
     getRuTrackerTorrents(artist_id, '', verbose=verbose)
     return 0
+
+def downloadRejected(verbose=True):
+
+    rejected_df = pd.read_csv(REJECTED_PATH)
+    for i, row in rejected_df.iterrows():
+        tmp_path = os.path.join(TORRENTS_PATH, row.hash + '.torrent')
+        ask = True
+        while(ask):
+            print(
+                'Torrent : {} has been rejected.\nReason : {}.'.format(
+                    row.torrent_name,
+                    row.reason
+                )
+            )
+            answer = input('Do you want to download it yet ? (yes|no)\n')
+            if answer in ['yes', 'no']:
+                ask = False
+        if answer == 'yes':
+            os.system('transmission-daemon')
+            os.system('transmission-remote -a {}'.format(tmp_path))
+        else:
+            if verbose:
+                print('-> {} is deleted.\n'.format(row.torrent_name))
+            os.system('rm {}'.format(tmp_path))
+        rejected_df = rejected_df[rejected_df.index!=i]
+        rejected_df.to_csv(REJECTED_PATH, index=False)
+    if verbose:
+        print('Rejected list cleaned.')
+    os.system('rm {}'.format(REJECTED_PATH))
 
