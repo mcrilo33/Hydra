@@ -7,7 +7,8 @@
 # Last Modified By  : Mathieu Crilout <mathieucrilout@mail>
 
 import os
-from scraping.database import addNewArtist, downloadRejected
+from scraping.database import addNewArtist, downloadRejected, \
+    updateDatabase
 from optparse import OptionParser
 from scraping.test import test
 
@@ -51,57 +52,58 @@ if __name__ == '__main__':
     )
     (options, args) = parser.parse_args()
 
-if not os.path.isfile('.opt.txt'):
-    unspecified = True
-    while unspecified:
-        answer = input(
-            "The root path where Hydra will store all your music hasn't been set.\n"\
-            + "Specify an absolute path : (default : " + DEFAULT_ROOT_PATH + ")"
-        )
-        if answer == '':
-            path = DEFAULT_ROOT_PATH
-            os.system('mkdir {}'.format(path))
-        else:
-            path = answer
-        if not os.path.isdir(path):
-            print('Error, wrong directory specified : {}')
-        else:
-            unspecified = False
-    with open('.opt.txt', 'w') as f:
-        f.write(path)
-    if not os.path.isdir(path+'/download'):
-        os.system('mkdir {}'.format(path+'/downloads'))
-    if not os.path.isdir(path+'/finished'):
-        os.system('mkdir {}'.format(path+'/finished'))
-    os.system('./scraping/transmission-configuration.sh')
-
-artist_typed = options.artist_typed
-rejected = options.rejected
-verbose = options.verbose
-base_path = options.base_path
-
-if base_path:
-    with open('.opt.txt', 'r') as f:
-        old_path = f.read()
-    if not os.path.isdir(base_path):
-        raise ValueError('Error, wrong directory specified : {}')
-    print(
-        "Root path where Hydra store all your music has been changed :\n"\
-        + base_path
-        + "\nAll your data will be moved to the new path."
-    )
-    if not old_path == base_path:
-        os.system('mv {}/.[!.]* {}'.format(old_path, base_path))
+    if not os.path.isfile('.opt.txt'):
+        unspecified = True
+        while unspecified:
+            answer = input(
+                "The root path where Hydra will store all your music hasn't been set.\n"\
+                + "Specify an absolute path : (default : " + DEFAULT_ROOT_PATH + ")"
+            )
+            if answer == '':
+                path = DEFAULT_ROOT_PATH
+                os.system('mkdir {}'.format(path))
+            else:
+                path = answer
+            if not os.path.isdir(path):
+                print('[Hydra] Error, wrong directory specified : {}'.format(path))
+            else:
+                unspecified = False
         with open('.opt.txt', 'w') as f:
-            f.write(base_path)
-        if not os.path.isdir(base_path+'/download'):
-            os.system('mkdir {}'.format(base_path+'/downloads'))
-        if not os.path.isdir(base_path+'/finished'):
-            os.system('mkdir {}'.format(base_path+'/finished'))
+            f.write(path)
+        if not os.path.isdir(path+'/download'):
+            os.system('mkdir {}'.format(path+'/downloads'))
+        if not os.path.isdir(path+'/finished'):
+            os.system('mkdir {}'.format(path+'/finished'))
         os.system('./scraping/transmission-configuration.sh')
-elif artist_typed != '':
-    addNewArtist(artist_typed, verbose=verbose)
-elif rejected:
-    downloadRejected(verbose=verbose)
-elif test:
-    test()
+
+    artist_typed = options.artist_typed
+    rejected = options.rejected
+    verbose = options.verbose
+    base_path = options.base_path
+
+    updateDatabase()
+    # if base_path:
+        # with open('.opt.txt', 'r') as f:
+            # old_path = f.read()
+        # if not os.path.isdir(base_path):
+            # raise ValueError('Error, wrong directory specified : {}'.format(base_path))
+        # print(
+            # "[Hydra] Root path where Hydra store all your music has been changed :\n"\
+            # + base_path
+            # + "\nAll your data will be moved to the new path."
+        # )
+        # if not old_path == base_path:
+            # os.system('mv {}/.[!.]* {}'.format(old_path, base_path))
+            # with open('.opt.txt', 'w') as f:
+                # f.write(base_path)
+            # if not os.path.isdir(base_path+'/download'):
+                # os.system('mkdir {}'.format(base_path+'/downloads'))
+            # if not os.path.isdir(base_path+'/finished'):
+                # os.system('mkdir {}'.format(base_path+'/finished'))
+            # os.system('./scraping/transmission-configuration.sh')
+    # elif artist_typed != '':
+        # addNewArtist(artist_typed, verbose=verbose)
+    # elif rejected:
+        # downloadRejected(verbose=verbose)
+    # elif test:
+        # test()

@@ -10,6 +10,7 @@ import dateparser
 import requests_html
 import hashlib
 import os
+import re
 import datetime
 import time
 import bencode
@@ -45,7 +46,7 @@ def getTorrentContent(content):
     if "files" not in torrent["info"]:
         if os.path.splitext(torrent["info"]["name"])[1]:
             return torrent['info']['name'], [], False
-        print('{} rejected !'.format(torrent["info"]["name"]))
+        print('[Hydra] {} rejected !'.format(torrent["info"]["name"]))
         return '', [], True
 
     tree = itertools.chain((f["path"] for f in torrent["info"]["files"]))
@@ -67,24 +68,32 @@ def checkTorrentIsFromTheArtist(artist_id, torrent_name, torrent_dirs):
     else:
         return False, reason
 
-def saveRejected(torrent_name, reason, hash):
+def saveRejected(torrent_name, reason, hash, rutracker_link):
 
     if os.path.isfile(REJECTED_PATH):
         rejected_df = pd.read_csv(REJECTED_PATH)
     else:
         rejected_df = pd.DataFrame(
             [],
-            columns=['torrent_name', 'reason', 'hash']
+            columns=['torrent_name', 'reason', 'hash', 'rutracker_link']
         )
 
     tmp = pd.DataFrame(
-            [[torrent_name, reason, hash]],
-            columns=['torrent_name', 'reason', 'hash']
+            [[torrent_name, reason, hash, rutracker_link]],
+            columns=['torrent_name', 'reason', 'hash', 'rutracker_link']
         )
     rejected_df = rejected_df.append(tmp)
     rejected_df.to_csv(REJECTED_PATH, index=False)
 
-def checkTorrent(artist_id, hash, content, torrent_db, tmp_path, verbose=True):
+def checkTorrent(
+        artist_id,
+        hash,
+        content,
+        torrent_db,
+        tmp_path,
+        rutracker_link,
+        verbose=True
+    ):
 
     torrent_name, torrent_dirs, exception = getTorrentContent(content)
 
@@ -106,21 +115,20 @@ def checkTorrent(artist_id, hash, content, torrent_db, tmp_path, verbose=True):
     if test:
         if verbose:
             print(
-                'New torrent : {} is added to the database.'.format(torrent_name)
+                '[Hydra] New torrent : {} is added to the database.'.format(torrent_name)
             )
     else:
         if verbose:
             print(
-                'New torrent : {} is rejected.\nReason : {}.'.format(
+                '[Hydra] New torrent : {} is rejected.\n[Hydra] Reason : {}'.format(
                     torrent_name,
                     reason
                 )
             )
         if reason != "It's not a music file.":
-            saveRejected(torrent_name, reason, hash)
+            saveRejected(torrent_name, reason, hash, rutracker_link)
 
     open(tmp_path, 'wb').write(content)
-    torrent_db.insert({'hash': hash})
 
     return test, reason
     
@@ -166,7 +174,7 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
         except:
             connected = False
     if verbose:
-        print('Connected at RuTracker.org...\n')
+        print('[Hydra] Connected at RuTracker.org...\n')
 
     url = "https://rutracker.org/forum/tracker.php?nm=%s" % (artist)
     connected = False
@@ -190,7 +198,7 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
     next = True
     torrent_db = TinyDB(TORRENTS_DATABASE_PATH)
     if verbose:
-        print('Starting to download torrents ' \
+        print('[Hydra] Starting to download torrents ' \
             + 'related to {}...\n'.format(artist_name.upper()))
         start_time = time.time()
     while(next):
@@ -198,6 +206,9 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
             date_tmp = link.find('p').text
             date_tmp = dateparser.parse(date_tmp, languages=['ru'])
             torrent_link = link.find('a', class_='dl-stub').get('href')
+            rutracker_id = re.search('\d+$', torrent_link).group(0)
+            rutracker_link = 'https://rutracker.org/forum/viewtopic.php?t=' \
+                + rutracker_id
             response = req.get(
                 TOP_LEVEL_URL + '/forum/' + torrent_link,
                 allow_redirects=True
@@ -206,21 +217,26 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
             hash = hashlib.md5(response.content).hexdigest()
             tmp_path = os.path.join(TORRENTS_PATH, hash + '.torrent')
 
+            torrent_db.insert({
+                'hash': hash,
+                'rutracker_link': rutracker_link
+                })
             test, reason = checkTorrent(artist_id,
                             hash,
                             response.content,
                             torrent_db,
                             tmp_path,
+                            rutracker_link,
                             verbose=verbose)
             if test:
                 os.system('transmission-daemon')
                 os.system('transmission-remote -a {}'.format(tmp_path))
                 link_count += 1
                 if verbose:
-                    print('Total downloaded : {}'.format(link_count))
+                    print('[Hydra] Total downloaded : {}'.format(link_count))
             else:
                 if verbose:
-                    print('Total downloaded : {}'.format(link_count))
+                    print('[Hydra] Total downloaded : {}'.format(link_count))
 
             if (link_count>500
                 or (link_count>200 and datetime.datetime(2010, 1, 1) > date_tmp)

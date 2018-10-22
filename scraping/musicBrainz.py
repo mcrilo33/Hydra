@@ -123,8 +123,6 @@ def checkMusicBrainzReleaseGroup(artist_id, title_typed):
 
     # Check if there is corresponding release-group
     if len(data[0])>0:
-        print(data[0][0][0].text)
-        print(title_typed)
         # Then check if we already have a good copy
         music_db = TinyDB(MUSIC_DATABASE_PATH)
         release = Query()

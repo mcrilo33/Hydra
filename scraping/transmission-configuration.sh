@@ -5,6 +5,9 @@
 # Last Modified Date: 20.10.2018
 # Last Modified By  : Mathieu Crilout <mathieucrilout@mail>
 
+# Launch transmission
+transmission-daemon
+
 # Set download options
 transmission-remote --lpd >&- # Enable local peer discovery (LPD)
 transmission-remote --pex >&- # Enable peer exchange (PEX)
@@ -16,4 +19,7 @@ root_path=$(cat .opt.txt)
 transmission-remote --download-dir "$root_path/finished" >&-
 # Where to store new torrents until they're complete
 transmission-remote --incomplete-dir "$root_path/download" >&-
-#transmission-remote --torrent-done-script <file> # Necessary to process files after downloading
+# Script launched after downloading
+transmission-remote --torrent-done-script "$PWD/scraping/transmission-done.sh" 
+
+echo "Transmission-cli options for Hydra have been set."
