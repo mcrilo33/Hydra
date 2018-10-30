@@ -18,8 +18,6 @@ root_path=$(cat .opt.txt)
 # Set the default download folder
 transmission-remote --download-dir "$root_path/finished" >&-
 # Where to store new torrents until they're complete
-transmission-remote --incomplete-dir "$root_path/download" >&-
-# Script launched after downloading
-transmission-remote --torrent-done-script "$PWD/scraping/transmission-done.sh" 
+transmission-remote --incomplete-dir "$root_path/downloads" >&-
 
-echo "Transmission-cli options for Hydra have been set."
+echo "[Hydra] Transmission-cli options for Hydra have been set."

@@ -83,6 +83,7 @@ def saveRejected(torrent_name, reason, hash, rutracker_link):
             columns=['torrent_name', 'reason', 'hash', 'rutracker_link']
         )
     rejected_df = rejected_df.append(tmp)
+    rejected_df = rejected_df.drop_duplicates()
     rejected_df.to_csv(REJECTED_PATH, index=False)
 
 def checkTorrent(
@@ -128,6 +129,10 @@ def checkTorrent(
         if reason != "It's not a music file.":
             saveRejected(torrent_name, reason, hash, rutracker_link)
 
+    torrent_db.insert({
+        'hash': hash,
+        'rutracker_link': rutracker_link
+    })
     open(tmp_path, 'wb').write(content)
 
     return test, reason
@@ -141,7 +146,6 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
     global USERNAME
     global PASSWORD
         
-    music_db = TinyDB(MUSIC_DATABASE_PATH)
     artist_db = TinyDB(ARTIST_DATABASE_PATH)
     artist = Query()
     artist_name = artist_db.search(
@@ -217,10 +221,6 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
             hash = hashlib.md5(response.content).hexdigest()
             tmp_path = os.path.join(TORRENTS_PATH, hash + '.torrent')
 
-            torrent_db.insert({
-                'hash': hash,
-                'rutracker_link': rutracker_link
-                })
             test, reason = checkTorrent(artist_id,
                             hash,
                             response.content,
@@ -229,8 +229,8 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
                             rutracker_link,
                             verbose=verbose)
             if test:
-                os.system('transmission-daemon')
-                os.system('transmission-remote -a {}'.format(tmp_path))
+                os.system('transmission-daemon >&-')
+                os.system('transmission-remote -a {} >&-'.format(tmp_path))
                 link_count += 1
                 if verbose:
                     print('[Hydra] Total downloaded : {}'.format(link_count))
@@ -262,12 +262,13 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
     if verbose:
         print('Downloading done. Took {:10.2f}s'.format(time.time() - start_time))
 
-        rejected_df = pd.read_csv(REJECTED_PATH)
-        if len(rejected_df):
-            print(
-                '\nWe have actually {}'.format(len(rejected_df))\
-                + ' rejected torrents in the rejected list.'
-            )
-            print('To check them use the command : python main.py --rejected')
+        if os.path.isfile(REJECTED_PATH):
+            rejected_df = pd.read_csv(REJECTED_PATH)
+            if len(rejected_df):
+                print(
+                    '\nThere is actually {}'.format(len(rejected_df))\
+                    + ' rejected torrents in the rejected list.'
+                )
+                print('To check them use the command : python main.py --rejected')
     return 0
 

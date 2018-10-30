@@ -14,14 +14,8 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from tinydb import TinyDB, Query
-from similarity.cosine import Cosine
-from similarity.ngram import NGram
-from similarity.qgram import QGram
-from similarity.jaccard import Jaccard
-from similarity.jarowinkler import JaroWinkler
-from similarity.sorensen_dice import SorensenDice
 from .utilities import artistParser, dateStrToDatetime, \
-    levenshteinDistance, MUSIC_DATABASE_PATH, TOP_QUALITY, \
+    MUSIC_DATABASE_PATH, TOP_QUALITY, \
     album_parsing
 
 def urlEncodeNonAscii(b):
@@ -45,6 +39,8 @@ def getMusicBrainzArtistId(artist_typed):
     url = re.sub(r'[^\x00-\x7f]',r'', url)
     response = (urllib.request.urlopen(url)).read()
     data = json.loads(response)
+    if len(data['artists']) == 0:
+        return -1
     id = data['artists'][0]['id']
 
     return id
@@ -130,11 +126,10 @@ def checkMusicBrainzReleaseGroup(artist_id, title_typed):
             release.release_group_mbid == data[0][0].get('id')
         )
         if(len(results) == 0
-           or not ('quality' in results[0] and results[0]['quality'] in
-                TOP_QUALITY)):
+           or not (results[0]['bitrate'] > 900)):
             return True, ''
         else:
-            return False, "We already have a good copy."
+            return False, "There is already a good copy."
     else:
         return False, "There is no corresponding release-group."
 

@@ -43,21 +43,6 @@ def dateStrToDatetime(date):
     else:
         return datetime.fromtimestamp(mktime(strptime(date, '%Y-%m-%d')))
 
-def levenshteinDistance(s1, s2):
-    if len(s1) > len(s2):
-        s1, s2 = s2, s1
-
-    distances = range(len(s1) + 1)
-    for i2, c2 in enumerate(s2):
-        distances_ = [i2+1]
-        for i1, c1 in enumerate(s1):
-            if c1 == c2:
-                distances_.append(distances[i1])
-            else:
-                distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
-        distances = distances_
-    return distances[-1]
-
 def album_parsing(title):
 
     title = title.lower()
@@ -67,7 +52,7 @@ def album_parsing(title):
     title = re.sub(r'\.\S+$', '', title)
     title = re.sub(r'(^| )(cassette|cd|ep|,)( |$)', r'\1\3', title)
     title = re.sub(r'(^| )((part|vol|disc) [I|1|2|3]+)( |$)', r'\1\3', title)
-    title = re.sub(r'-|\.|&', '', title)
+    title = re.sub(r'-|\.|&', ' ', title)
     title = re.sub(r'_', ' ', title)
     title = re.sub(r'\d{4}-\d{2}-\d{2}:?', ' ', title)
     title = re.sub(r'\d{4}', ' ', title)

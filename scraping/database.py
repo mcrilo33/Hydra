@@ -38,12 +38,14 @@ def addNewArtist(artist_typed, verbose=True):
     artist_db = TinyDB(ARTIST_DATABASE_PATH)
     torrent_db = TinyDB(TORRENTS_DATABASE_PATH)
     artist_id = getMusicBrainzArtistId(artist_typed)
+    if artist_id == -1:
+        print("[Hydra] The artist '{}' hasn't been found".format(artist_typed)
+              + " in the MusicBrainz database.\n")
+        return 0
     albums = getMusicBrainzAlbums(artist_id, '')
 
+
     # debug purpose
-    music_db.purge()
-    artist_db.purge()
-    torrent_db.purge()
     test = Query()
     artists_query = artist_db.search(test.artist_mbid == artist_id)
     if len(artists_query) != 0:
@@ -82,21 +84,28 @@ def downloadRejected(verbose=True):
         print('[Hydra] There is no rejected torrents to processed.')
         return 0
     rejected_df = pd.read_csv(REJECTED_PATH)
+    rejected_df = rejected_df.drop_duplicates()
     print('[Hydra] Rejected list :')
     for i, row in rejected_df.iterrows():
         print('        {}'.format(row.torrent_name))
         print('        {}'.format(row.rutracker_link))
+    print('')
     for i, row in rejected_df.iterrows():
         tmp_path = os.path.join(TORRENTS_PATH, row.hash + '.torrent')
         ask = True
         while(ask):
             print(
-                '[Hydra] Torrent : {} has been rejected.\n[Hydra] Reason : {}'.format(
-                    row.torrent_name,
+                '[Hydra] Torrent : {} has been rejected.\n'.format(
+                    row.torrent_name
+                ) \
+                + '        Info link : {}\n'.format(
+                    row.rutracker_link
+                ) \
+                + '        Reason : {}'.format(
                     row.reason
                 )
             )
-            answer = input('Hydra : Do you want to download it yet ? (default:y|n)\n')
+            answer = input('[Hydra] Do you want to download it yet ? (default:y|n)\n')
             if answer == '':
                 answer = 'y'
             if answer in ['y', 'n']:
@@ -126,11 +135,10 @@ def updateDatabase():
             if os.path.splitext(file)[1] in AUDIO_TYPE:
                 path = os.path.join(w[0], file)
                 updateAlbum(path)
-            break
+                break
 
 def updateAlbum(path):
     path = re.sub(' ', '\\ ', path)
-    print(path)
     command = "ffprobe {} &> .tmp.txt".format(path)
     os.system(command)
 
@@ -169,15 +177,7 @@ def updateAlbum(path):
               + '        You should edit it manually.')
         return 1
 
-    print(
-        artist_mbid+'\n',
-        date+'\n',
-        title+'\n',
-        release_group_mbid+'\n',
-        bitrate,
-        path
-    )
-    music_db = TinyDB(ARTIST_DATABASE_PATH)
+    music_db = TinyDB(MUSIC_DATABASE_PATH)
     albums = Query()
     album_query = music_db.search(
         albums.release_group_mbid == release_group_mbid
@@ -186,7 +186,6 @@ def updateAlbum(path):
     if (len(album_query) > 0 and album_query[0]['bitrate'] < bitrate):
         # delete the older one
         os.system('rm -rf {}'.format(album_query[0]['path']))
-        print(path)
         path = re.sub('\\\\ ', ' ', path)
         path = os.path.dirname(path)
         path = re.sub(' ', '\\ ', path)
@@ -215,3 +214,40 @@ def updateAlbum(path):
         )
 
     return 0
+
+def downloadingRoutine(verbose=True):
+
+    artist_db = TinyDB(ARTIST_DATABASE_PATH)
+    music_db = TinyDB(MUSIC_DATABASE_PATH)
+
+    test = Query()
+    date = (datetime.datetime.now()
+        - datetime.timedelta(weeks=1)).strftime('%Y-%m-%d')
+    artists = artist_db.search(test.update_date < date)
+
+    for artist in artists:
+        # download new albums
+        # download new torrents
+        albums = getMusicBrainzAlbums(artist['artist_mbid'], date)
+
+        for album in albums:
+            music_db.insert({
+                'artist_mbid': album[0],
+                'date': album[1],
+                'title': album[2],
+                'release_group_mbid': album[3],
+                'bitrate': 0,
+                'path': ''
+            })
+            if verbose:
+                print('Album : {:<46.46} inserted in database.'.format('"'+album[2]+'"'))
+        if verbose:
+            print('Total Albums added : {}'.format(len(albums)) \
+                + ' ====================================================\n')
+        getRuTrackerTorrents(artist_id, date, verbose=verbose)
+
+        test = Query()
+        artist_db.update(
+            {'update_date': datetime.datetime.now().strftime('%Y-%m-%d')},
+            test.artist_mbid == artist['artist_mbid']
+        )
