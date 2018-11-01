@@ -34,6 +34,7 @@ Etc...
 No installer.
 
 # Hydra [![Cult Of Martians]["https://github.com/mcrilo33/Hydra/img/transmission-logo.svg"]][tr]
+# Size Limit [![Cult Of Martians][cult-img]][cult]
 
 <img src="https://ai.github.io/size-limit/logo.svg" align="right"
      title="Size Limit logo by Anton Lovchikov" width="120" height="178">
