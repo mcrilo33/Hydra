@@ -33,7 +33,7 @@ Etc...
 
 No installer.
 
-# Hydra [![Cult Of Martians]["https://github.com/mcrilo33/Hydra/img/transmission-logo.svg"]][tr]
+# Hydra [![Cult Of Martians][""]][tr]
 # Size Limit [![Cult Of Martians][cult-img]][cult]
 
 <img src="https://ai.github.io/size-limit/logo.svg" align="right"
@@ -63,7 +63,7 @@ internal dependencies.
 </p>
 
 [Size Limit: Make the Web lighter]: https://evilmartians.com/chronicles/size-limit-make-the-web-lighter
-[cult-img]:                         http://cultofmartians.com/assets/badges/badge.svg
+[cult-img]:                         https://github.com/mcrilo33/Hydra/img/transmission-logo.svg
 [cult]:                             http://cultofmartians.com/tasks/size-limit-config.html
 
 ## Who Uses Size Limit
