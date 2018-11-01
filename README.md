@@ -33,33 +33,29 @@ Etc...
 
 No installer.
 
-# Hydra [![Cult Of Martians][""]][tr]
+# Hydra
 
 <img src="https://mcrilo33.github.io/Hydra/logo.svg" align="right"
-     title="Hydra" width="120" height="120">
+     title="Hydra" width="100" height="100">
 
 Hydra is a music manager which keep all your music well organized and use popular p2p tracker to update and download music.
 
 ## Dependencies
 
 * Transmission-cli as a light-weight and cross-platform BitTorrent client.
-<p align="right">
+* MusicBrainz tagging application.
+<p align="right" display="block">
   <a href="https://transmissionbt.com/">
 <img src="https://mcrilo33.github.io/Hydra/transmission-logo.svg" align="right"
      title="transmission-logo" width="50" height="50">
   </a>
 </p>
-* MusicBrainz tagging application.
-<p align="right">
+<p align="right" display="block">
   <a href="https://picard.musicbrainz.org/">
     <img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" align="right"
      title="musicbrainz-picard-logo" width="50" height="50">
   </a>
 </p>
-
-[Size Limit: Make the Web lighter]: https://evilmartians.com/chronicles/size-limit-make-the-web-lighter
-[cult-img]:                         
-[cult]:                             http://cultofmartians.com/tasks/size-limit-config.html
 
 ## How It Works
 
