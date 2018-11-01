@@ -53,14 +53,19 @@ if __name__ == '__main__':
         action="store_true",
         help="Launch the downloading routine. Best use is with cron job."
     )
+    parser.add_option(
+        "-t", "--test",
+        dest="auto_test",
+        default=False,
+        action="store_true",
+        help="Check if dependencies have been installed."
+    )
     (options, args) = parser.parse_args()
 
-    testAuto()
     # set all options
     if os.path.isfile('.opt.txt'):
         with open('.opt.txt', 'r') as f:
             path = f.read()
-        os.system('./scraping/cron-job.sh')
     if not os.path.isfile('.opt.txt') or not os.path.isdir(path):
         unspecified = True
         while unspecified:
@@ -113,3 +118,5 @@ if __name__ == '__main__':
     elif downloading_routine:
         updateDatabase()
         downloadingRoutine()
+    elif testAuto:
+        testAuto()
