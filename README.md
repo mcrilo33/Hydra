@@ -62,8 +62,8 @@ Finally you just have to enjoy your music organized in Tagged with the player of
 ## Suggestion
 You might want to configure transmission-cli so that it launches at startup.
 
-You migt also want to configure a cronjob like :
+You migt also want to configure a cronjob with a command like this :
 ```sh
-$ python main.py --downloading
+$(crontab -l ; echo "0 0 ** 0 python absolute/path/to/main.py --downloading")| crontab - 
 ```
 To download new albums of the artists in the database regularly, every week for instance.
