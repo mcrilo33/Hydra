@@ -42,14 +42,8 @@ Hydra is a music manager which keep all your music well organized and use popula
 
 ## Dependencies
 
-* Transmission-cli as a light-weight and cross-platform BitTorrent client.
+* [transmission-logo][transmission] Transmission-cli as a light-weight and cross-platform BitTorrent client.
 * MusicBrainz tagging application.
-<p align="right" display="block">
-  <a href="https://transmissionbt.com/">
-<img src="https://mcrilo33.github.io/Hydra/transmission-logo.svg" align="right"
-     title="transmission-logo" width="50" height="50">
-  </a>
-</p>
 <p align="right" display="block">
   <a href="https://picard.musicbrainz.org/">
     <img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" align="right"
@@ -57,6 +51,8 @@ Hydra is a music manager which keep all your music well organized and use popula
   </a>
 </p>
 
+[transmission-logo]:    https://mcrilo33.github.io/Hydra/transmission-logo.svg
+[transmission]:         https://transmissionbt.com/
 ## How It Works
 
 You can find more examples in **[Size Limit: Make the Web lighter]** article.
