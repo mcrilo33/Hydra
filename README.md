@@ -1,224 +1,69 @@
 # Hydra
 
-**Already working**
-
-python main.py --new "Name of an artist"
-
-Add an artist to the Hydra database and then download from rutracker all the
-revelant torrents from this artist.
-
-python main.py --rejected
-
-Wether to download or not ambiguous rejected torrents.
-
-**Coming soon**:
-
-After torrent has been download automatically format it well.
-
-Check on a week basis, wether or not, our artists in Hydra database have new
-albums to download.
-
-
-### User Installation
-
-No installer.
-
-# Hydra
-
 <img src="https://mcrilo33.github.io/Hydra/logo.svg" align="right"
      title="Hydra" width="100" height="100">
 
-Hydra is a music manager which keep all your music well organized and use popular p2p tracker to update and download music.
+Hydra is a music manager written in python which keep all your music well organized and use popular p2p tracker to update and download music freely available on the web.
 
 ## Dependencies
 
 * [<img src="https://mcrilo33.github.io/Hydra/transmission-logo.svg" width="25" height="25"> Transmission-cli](https://transmissionbt.com/) as a light-weight and cross-platform BitTorrent client.
-* [<img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" width="25" height="25"> MusicBrainzPicard](https://picard.musicbrainz.org/) as a cross-platform music tagger.
+* [<img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" width="25" height="25"> MusicBrainz Picard](https://picard.musicbrainz.org/) as a cross-platform music tagger.
 
 ## How It Works
 
-You can find more examples in **[Size Limit: Make the Web lighter]** article.
+Hydra tracks all torrents downloaded with transmission-cli and analyzes all your music files tagged with MusicBrainz Picard which gives a unique id for each of your albums. Thus it keeps only your best recordings and delete duplicates automatically.
 
-To be really specific, Size Limit creates an empty webpack project in memory.
-Then, it adds your library as a dependency to the project and calculates
-the real cost of your libraries, including all dependencies, webpack’s polyfills
-for process, etc.
+Moreover, it has a downloading routine to keep track of all new music available on the web from your favorite artists.
 
+
+## Installation
+
+First, install `transmission-cli` and `picard`:
+
+```sh
+$ sudo apt-get install transmission-cli # for ubuntu
+$ sudo apt-get install picard
+```
+
+Then clone the repo and make init :
+```sh
+$ git clone https://github.com/mcrilo33/Hydra.git && cd Hydra
+$ make init
+```
+You can finally test if Hydra finds all the dependencies with :
+```sh
+$ make test
+```
 
 ## Usage
 
-First, install `size-limit`:
+If you followed the installation process accordingly everything should be working fine.
+```sh
+$ python main.py --help # Gives all available options
+```
+
+At first use you will need to give the path of your music library. It will create at this path a Downloads directory where transmission-cli will put files still downloading, a Finished directory to move downloaded files, and a Tagged directory where you can find your music properly tagged and organized (it's the final directory - you should see it as your Music Library directory).
+
+Warning : To function properly, all files put in Tagged should be tagged with MusicBrainz Picard before.
+
+If you want to add a new artist in your library :
 
 ```sh
-$ npm install --save-dev size-limit
+# download all albums from this artist that Hydra can find.
+$ python main.py --new "Name of your favorite artist"
 ```
 
-Add `size-limit` section to `package.json` and `size` script:
+When some files are downloaded you must tag it with MusicBrainz Picard.
+You can look up at this [guide](https://picard.musicbrainz.org/quick-start/) if you don't know how to do it.
 
-```diff
-+ "size-limit": [
-+   {
-+     "path": "index.js"
-+   }
-+ ],
-  "scripts": {
-+   "size": "size-limit",
-    "test": "jest && eslint ."
-  }
-```
+Finally you just have to enjoy your music organized in Tagged with the player of your choice. A good one I recommend is [Deadbeef](https://en.wikipedia.org/wiki/DeaDBeeF) which can give you bit perfect audio playback. Another one is [Google Play Music](https://play.google.com/music/) which is a music and podcast streaming service where you can put freely your own music up to 50.000 tracks.
 
-The `path` option:
+## Suggestion
+You might want to configure transmission-cli so that it launches at startup.
 
-* For an open source library, specify compiled sources, which will be published
-  to npm (usually the same value as the `main` field in the `package.json`);
-* For an application, specify a bundle file and use `webpack: false` (see the
-  [Applications](#applications) section).
-
-Here’s how you can get the size for your current project:
-
+You migt also want to configure a cronjob like :
 ```sh
-$ npm run size
-
-  Package size: 8.46 KB
-  With all dependencies, minified and gzipped
-
+$ python main.py --downloading
 ```
-
-If your project size starts to look bloated,
-run [Webpack Bundle Analyzer](https://github.com/th0r/webpack-bundle-analyzer)
-for analysis:
-
-```sh
-$ npm run size -- --why
-```
-
-Now, let’s set the limit. Determine the current size of your library,
-add just a little bit (a kilobyte, maybe) and use that as a limit in
-your `package.json`:
-
-```diff
- "size-limit": [
-    {
-+     "limit": "9 KB",
-      "path": "index.js"
-    }
- ],
-```
-
-Add the `size` script to your test suite:
-
-```diff
-  "scripts": {
-    "size": "size-limit",
--   "test": "jest && eslint ."
-+   "test": "jest && eslint . && npm run size"
-  }
-```
-
-If you don’t have a continuous integration service running, don’t forget
-to add one — start with [Travis CI](https://github.com/dwyl/learn-travis).
-
-
-## Config
-
-Size Limits supports 3 ways to define config.
-
-1. `size-limit` section to `package.json`:
-
-   ```json
-     "size-limit": [
-       {
-         "path": "index.js",
-         "limit": "9 KB"
-       }
-     ]
-   ```
-
-2. or separated `.size-limit` config file:
-
-   ```js
-   [
-     {
-       path: "index.js",
-       limit: "9 KB"
-     }
-   ]
-   ```
-
-3. or more flexible `.size-limit.js` config file:
-
-   ```js
-   module.exports = [
-     {
-       path: "index.js",
-       limit: "9 KB"
-     }
-   ]
-   ```
-
-Each section in config could have options:
-
-* **path**: relative paths to files. The only mandatory option.
-  It could be a path `"index.js"`, a pattern `"dist/app-*.js"`
-  or an array `["index.js", "dist/app-*.js"]`.
-* **entry**: when using a custom webpack config, a webpack entry could be given.
-  It could be a string or an array of strings.
-  By default the total size of all entry points will be checked.
-* **limit**: size limit for files from `path` option. It should be a string
-  with a number and unit (`100 B`, `10 KB`, etc).
-* **name**: the name of this section. It will be useful only
-  if you have multiple sections.
-* **webpack**: with `false` will disable webpack.
-* **gzip**: with `false` will disable gzip compression.
-* **config**: a path to custom webpack config.
-* **ignore**: an array of files and dependencies to ignore from project size.
-
-## Applications
-
-Webpack inside Size Limit is very useful for small open source library.
-But if you want to use Size Limit for application, not open source library, you
-could already have webpack to make bundle.
-
-In this case you can disable internal webpack:
-
-```diff
- "size-limit": [
-    {
-      "limit": "300 KB",
-+     "webpack": false,
-      "path": "public/app-*.js"
-    }
- ],
-```
-
-
-## JavaScript API
-
-```js
-const getSize = require('size-limit')
-
-const index = path.join(__dirname, 'index.js')
-const extra = path.join(__dirname, 'extra.js')
-
-getSize([index, extra]).then(size => {
-  if (size.gzip > 1 * 1024 * 1024) {
-    console.error('Project is now larger than 1MB!')
-  }
-})
-```
-
-
-## Comparison with `bundlesize`
-
-Main difference between Size Limit and `bundlesize`, that Size Limit uses
-webpack to build bundle. It has more accurate result and can show you
-_what_ and _why_ causes the bloat.
-
-1. Size Limit has the `--why` mode to run Webpack Bundle Analyzer — this way,
-   you can see what went wrong in a nice graphical representation.
-2. Instead of bundlesize, Size Limit prevents the most popular source
-   of libraries bloat — unexpected huge dependency.
-3. Also Size Limit prevents increasing library size because of wrong `process`
-   or `path` usage, when webpack will add big unnecessary polyfill.
-4. Size Limit runs only on first CI job, so it is more respectful
-   to CI resources.
+To download new albums of the artists in the database regularly, every week for instance.
