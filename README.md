@@ -18,16 +18,6 @@ After torrent has been download automatically format it well.
 Check on a week basis, wether or not, our artists in Hydra database have new
 albums to download.
 
-## Installation
-
-### Dependencies
-
-Hydra uses transmission-cli to download all torrents. You need to install it.
-
-For ubuntu the command is : >>sudo apt-get install transmission-cli
-
-For arch with pacman manager the command is : >>sudo pacman -S transmission-cli
-Etc...
 
 ### User Installation
 
@@ -42,14 +32,8 @@ Hydra is a music manager which keep all your music well organized and use popula
 
 ## Dependencies
 
-* [<img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" width="25" height="25">](https://transmissionbt.com/) Transmission-cli as a light-weight and cross-platform BitTorrent client.
-* MusicBrainz tagging application.
-<p align="right" display="block">
-  <a href="https://picard.musicbrainz.org/">
-    <img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" align="right"
-     title="musicbrainz-picard-logo" width="50" height="50">
-  </a>
-</p>
+* [<img src="https://mcrilo33.github.io/Hydra/transmission-logo.svg" width="25" height="25"> Transmission-cli](https://transmissionbt.com/) as a light-weight and cross-platform BitTorrent client.
+* [<img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" width="25" height="25"> MusicBrainzPicard](https://picard.musicbrainz.org/) as a cross-platform music tagger.
 
 ## How It Works
 
