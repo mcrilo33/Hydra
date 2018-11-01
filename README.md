@@ -63,7 +63,7 @@ internal dependencies.
 </p>
 
 [Size Limit: Make the Web lighter]: https://evilmartians.com/chronicles/size-limit-make-the-web-lighter
-[cult-img]:                         https://github.com/mcrilo33/Hydra/blob/master/img/transmission-logo.svg
+[cult-img]:                         https://mcrilo33.github.io/Hydra/logo.svg
 [cult]:                             http://cultofmartians.com/tasks/size-limit-config.html
 
 ## Who Uses Size Limit
