@@ -7,6 +7,7 @@
 # Last Modified By  : Mathieu Crilout <mathieucrilout@mail>
 
 import subprocess
+import os
 
 def testAuto():
 
@@ -150,3 +151,18 @@ def setPicardSetting(path):
         with open(picard_path, 'a') as f:
             f.write('\n[persist]\ncurrent_directory=' + path + '/finished\n')
     print("[Hydra] MusicBrainz Picard options for Hydra have been set.")
+
+def updateOptions():
+
+    with open('.opt.txt', 'r') as f:
+        path = f.read()
+
+    if not os.path.isdir(path+'/downloads'):
+        os.system('mkdir {}'.format(path+'/downloads'))
+    if not os.path.isdir(path+'/finished'):
+        os.system('mkdir {}'.format(path+'/finished'))
+    if not os.path.isdir(path+'/tagged'):
+        os.system('mkdir {}'.format(path+'/tagged'))
+    os.system('./scraping/transmission-configuration.sh')
+    os.system('./scraping/cron-job.sh')
+

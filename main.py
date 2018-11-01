@@ -12,7 +12,8 @@ import re
 from scraping.database import addNewArtist, downloadRejected, \
     updateDatabase, downloadingRoutine
 from optparse import OptionParser
-from scraping.test import testAuto, setPicardSetting
+from scraping.test import testAuto, setPicardSetting, \
+    updateOptions
 
 DEFAULT_ROOT_PATH = '~/hydra-music'
 
@@ -55,10 +56,11 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
     testAuto()
-    # sett all options
+    # set all options
     if os.path.isfile('.opt.txt'):
         with open('.opt.txt', 'r') as f:
             path = f.read()
+        os.system('./scraping/cron-job.sh')
     if not os.path.isfile('.opt.txt') or not os.path.isdir(path):
         unspecified = True
         while unspecified:
@@ -77,18 +79,7 @@ if __name__ == '__main__':
                 unspecified = False
         with open('.opt.txt', 'w') as f:
             f.write(path)
-
-    with open('.opt.txt', 'r') as f:
-        path = f.read()
-
-    if not os.path.isdir(path+'/downloads'):
-        os.system('mkdir {}'.format(path+'/downloads'))
-    if not os.path.isdir(path+'/finished'):
-        os.system('mkdir {}'.format(path+'/finished'))
-    if not os.path.isdir(path+'/tagged'):
-        os.system('mkdir {}'.format(path+'/tagged'))
-
-    os.system('./scraping/transmission-configuration.sh')
+    updateOptions()
 
     # main
     artist_typed = options.artist_typed
@@ -111,13 +102,7 @@ if __name__ == '__main__':
             os.system('mv {}/.[!.]* {}'.format(old_path, base_path))
             with open('.opt.txt', 'w') as f:
                 f.write(base_path)
-            if not os.path.isdir(base_path+'/downloads'):
-                os.system('mkdir {}'.format(base_path+'/downloads'))
-            if not os.path.isdir(base_path+'/finished'):
-                os.system('mkdir {}'.format(base_path+'/finished'))
-            if not os.path.isdir(base_path+'/tagged'):
-                os.system('mkdir {}'.format(path+'/tagged'))
-            os.system('./scraping/transmission-configuration.sh')
+            updateOptions()
     elif artist_typed != '':
         os.system('./scraping/transmission-configuration.sh')
         updateDatabase()
@@ -126,5 +111,5 @@ if __name__ == '__main__':
         os.system('./scraping/transmission-configuration.sh')
         downloadRejected(verbose=verbose)
     elif downloading_routine:
-        #updateDatabase()
+        updateDatabase()
         downloadingRoutine()

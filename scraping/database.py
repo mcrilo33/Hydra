@@ -244,7 +244,11 @@ def downloadingRoutine(verbose=True):
         if verbose:
             print('Total Albums added : {}'.format(len(albums)) \
                 + ' ====================================================\n')
-        getRuTrackerTorrents(artist_id, date, verbose=verbose)
+        getRuTrackerTorrents(
+            artist['artist_mbid'], 
+            artist['update_date'],
+            verbose=verbose
+        )
 
         test = Query()
         artist_db.update(

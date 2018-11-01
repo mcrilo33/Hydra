@@ -266,7 +266,7 @@ def getRuTrackerTorrents(artist_id, date, verbose=True):
             rejected_df = pd.read_csv(REJECTED_PATH)
             if len(rejected_df):
                 print(
-                    '\nThere is actually {}'.format(len(rejected_df))\
+                    '\nThere are {}'.format(len(rejected_df))\
                     + ' rejected torrents in the rejected list.'
                 )
                 print('To check them use the command : python main.py --rejected')
