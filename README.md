@@ -64,6 +64,6 @@ You might want to configure transmission-cli so that it launches at startup.
 
 You migt also want to configure a cronjob with a command like this :
 ```sh
-$(crontab -l ; echo "0 0 ** 0 python absolute/path/to/main.py --downloading")| crontab - 
+$(crontab -l ; echo "0 0 * * 0 python absolute/path/to/main.py --downloading")| crontab - 
 ```
 To download new albums of the artists in the database regularly, every week for instance.
