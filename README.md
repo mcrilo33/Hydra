@@ -7,7 +7,7 @@ Hydra is a music manager written in python which keep all your music well organi
 
 ## Dependencies
 
-* [<img src="https://mcrilo33.github.io/Hydra/transmission-logo.svg" width="25" height="25"> Transmission-cli](https://transmissionbt.com/) as a light-weight and cross-platform BitTorrent client.
+* [<img src="https://mcrilo33.github.io/Hydra/transmission-logo.png" width="25" height="25"> Transmission-cli](https://transmissionbt.com/) as a light-weight and cross-platform BitTorrent client.
 * [<img src="https://mcrilo33.github.io/Hydra/picard-logo.svg" width="25" height="25"> MusicBrainz Picard](https://picard.musicbrainz.org/) as a cross-platform music tagger.
 
 ## How It Works
