@@ -38,7 +38,7 @@ $ make test
 
 ## Usage
 
-If you followed the installation process accordingly everything should be working fine.
+If you followed the installation process accordingly everything should work just fine.
 ```sh
 $ python main.py --help # Gives all available options
 ```
